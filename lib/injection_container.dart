@@ -57,7 +57,7 @@ Future<void> init() async {
       BaseOptions(
         baseUrl:
             'https://192.168.4.104:7066/api', // ✅ Tu IP ya está configurada
-        //baseUrl: 'https://10.0.2.2:7066/api',
+        //baseUrl: 'https://10.0.2.2:7066/api', // remoto
         connectTimeout: const Duration(seconds: 30), // ✅ Descomentar esto
         receiveTimeout: const Duration(seconds: 30), // ✅ Descomentar esto
         headers: {
