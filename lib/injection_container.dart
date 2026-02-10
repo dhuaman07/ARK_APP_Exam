@@ -1,16 +1,28 @@
-import 'dart:io'; // ⭐ AGREGAR ESTE IMPORT
+// lib/injection_container.dart
+
+import 'dart:io';
 import 'package:dio/dio.dart';
-import 'package:dio/io.dart'; // ⭐ AGREGAR ESTE IMPORT
+import 'package:dio/io.dart';
+import 'package:flutter_login_app/features/home/data/datasource/assigned_exam_remote_datasource.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'core/network/auth_interceptor.dart';
+
+// Auth imports
 import 'features/auth/data/datasources/auth_local_data_source.dart';
 import 'features/auth/data/datasources/auth_remote_data_source.dart';
 import 'features/auth/data/repositories/auth_repository_impl.dart';
 import 'features/auth/domain/repositories/auth_repository.dart';
 import 'features/auth/domain/usecases/login_user.dart';
 import 'features/auth/presentation/bloc/auth_bloc.dart';
+
+// ✅ Home/AssignedExams imports
+import 'features/home/data/repositories/assigned_exam_repository_impl.dart';
+import 'features/home/domain/repositories/assigned_exam_repository.dart';
+import 'features/home/domain/usecases/get_all_assigned_exams.dart';
+import 'features/home/presentation/bloc/assigned_exam_bloc.dart'; // ✅ AGREGAR
 
 final sl = GetIt.instance;
 
@@ -47,6 +59,30 @@ Future<void> init() async {
     ),
   );
 
+  // ============ Features - Home (AssignedExams) ============
+
+  // ✅ AGREGAR: BLoC
+  sl.registerFactory(
+    () => AssignedExamBloc(
+      getAllAssignedExams: sl(),
+    ),
+  );
+
+  // ✅ AGREGAR: Use cases
+  sl.registerLazySingleton(() => GetAllAssignedExams(sl()));
+
+  // ✅ AGREGAR: Repository
+  sl.registerLazySingleton<AssignedExamRepository>(
+    () => AssignedExamRepositoryImpl(
+      remoteDataSource: sl(),
+    ),
+  );
+
+  // ✅ AGREGAR: Data sources
+  sl.registerLazySingleton<AssignedExamRemoteDataSource>(
+    () => AssignedExamRemoteDataSourceImpl(dio: sl()),
+  );
+
   // ============ Core ============
 
   // ============ External ============
@@ -55,11 +91,9 @@ Future<void> init() async {
   sl.registerLazySingleton(() {
     final dio = Dio(
       BaseOptions(
-        baseUrl:
-            'https://192.168.4.104:7066/api', // ✅ Tu IP ya está configurada
-        //baseUrl: 'https://10.0.2.2:7066/api', // remoto
-        connectTimeout: const Duration(seconds: 30), // ✅ Descomentar esto
-        receiveTimeout: const Duration(seconds: 30), // ✅ Descomentar esto
+        baseUrl: 'https://172.17.16.1:7066/api',
+        connectTimeout: const Duration(seconds: 30),
+        receiveTimeout: const Duration(seconds: 30),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -67,23 +101,30 @@ Future<void> init() async {
       ),
     );
 
-    // ⭐⭐⭐ AGREGAR ESTO - Permitir certificados auto-firmados ⭐⭐⭐
+    // Permitir certificados auto-firmados (solo desarrollo)
     (dio.httpClientAdapter as IOHttpClientAdapter).createHttpClient = () {
       final client = HttpClient();
       client.badCertificateCallback =
           (X509Certificate cert, String host, int port) {
         print('🔓 Aceptando certificado de: $host:$port');
-        return true; // Acepta todos los certificados (solo para desarrollo)
+        return true;
       };
       return client;
     };
 
-    // Interceptores para logs y tokens
+    // ✅ Interceptor de autenticación
+    dio.interceptors.add(
+      AuthInterceptor(authLocalDataSource: sl()),
+    );
+
+    // Interceptor de logs
     dio.interceptors.add(
       LogInterceptor(
         requestBody: true,
         responseBody: true,
-        error: true, // ⭐ Agregar para ver errores completos
+        error: true,
+        requestHeader: true,
+        responseHeader: false,
       ),
     );
 

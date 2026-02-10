@@ -43,7 +43,7 @@ class MyApp extends StatelessWidget {
         ),
       ],
       child: MaterialApp(
-        title: 'Flutter Login App',
+        title: 'Question App',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
           useMaterial3: true,

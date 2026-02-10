@@ -1,3 +1,5 @@
+// lib/features/auth/data/datasources/auth_local_datasource.dart
+
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -5,7 +7,7 @@ import '../../../../core/error/exceptions.dart';
 import '../models/user_model.dart';
 
 abstract class AuthLocalDataSource {
-  Future<void> cacheUser(UserModel user);
+  Future<void> saveUser(UserModel user);
   Future<UserModel?> getCachedUser();
   Future<void> clearCache();
   Future<void> saveToken(String token);
@@ -25,14 +27,15 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
   });
   
   @override
-  Future<void> cacheUser(UserModel user) async {
+  Future<void> saveUser(UserModel user) async {
     try {
       await sharedPreferences.setString(
         cachedUserKey,
         jsonEncode(user.toJson()),
       );
     } catch (e) {
-      throw CacheException('Error al guardar usuario');
+      // ✅ CAMBIO: Usar parámetro nombrado 'message:'
+      throw CacheException(message: 'Error al guardar usuario: ${e.toString()}');
     }
   }
   
@@ -45,7 +48,8 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
       }
       return null;
     } catch (e) {
-      throw CacheException('Error al obtener usuario');
+      // ✅ CAMBIO: Usar parámetro nombrado 'message:'
+      throw CacheException(message: 'Error al obtener usuario: ${e.toString()}');
     }
   }
   
@@ -55,7 +59,8 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
       await sharedPreferences.remove(cachedUserKey);
       await secureStorage.delete(key: tokenKey);
     } catch (e) {
-      throw CacheException('Error al limpiar cache');
+      // ✅ CAMBIO: Usar parámetro nombrado 'message:'
+      throw CacheException(message: 'Error al limpiar cache: ${e.toString()}');
     }
   }
   
@@ -64,7 +69,8 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
     try {
       await secureStorage.write(key: tokenKey, value: token);
     } catch (e) {
-      throw CacheException('Error al guardar token');
+      // ✅ CAMBIO: Usar parámetro nombrado 'message:'
+      throw CacheException(message: 'Error al guardar token: ${e.toString()}');
     }
   }
   
@@ -73,7 +79,8 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
     try {
       return await secureStorage.read(key: tokenKey);
     } catch (e) {
-      throw CacheException('Error al obtener token');
+      // ✅ CAMBIO: Usar parámetro nombrado 'message:'
+      throw CacheException(message: 'Error al obtener token: ${e.toString()}');
     }
   }
 }
