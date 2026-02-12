@@ -2,7 +2,7 @@
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_login_app/features/home/domain/usecases/get_all_assigned_exams.dart';
-import 'package:flutter_login_app/features/home/presentation/bloc/asigned_exam_event.dart';
+import 'package:flutter_login_app/features/home/presentation/bloc/assigned_exam/asigned_exam_event.dart';
 import 'assigned_exam_state.dart';
 
 class AssignedExamBloc extends Bloc<AssignedExamEvent, AssignedExamState> {

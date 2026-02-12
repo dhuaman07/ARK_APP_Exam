@@ -1,6 +1,7 @@
 // lib/features/home/presentation/pages/home_page.dart
 
 import 'package:flutter/material.dart';
+import 'package:flutter_login_app/features/home/presentation/widgets/recent_results_section.dart';
 import '../../../auth/domain/entities/user.dart';
 import '../../../auth/presentation/pages/login_page.dart';
 import '../widgets/home_header.dart';
@@ -44,7 +45,7 @@ class _HomePageState extends State<HomePage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // ✅ Performance Summary
-                    PerformanceSummaryCard(
+                    const PerformanceSummaryCard(
                       averageGrade: '88%',
                       examsCompleted: 12,
                     ),
@@ -66,36 +67,8 @@ class _HomePageState extends State<HomePage> {
 
                     const SizedBox(height: 12),
 
-                    // ✅ Result Items
-                    ResultItem(
-                      title: 'World History 101',
-                      subtitle: 'Completed Oct 28',
-                      score: '92/100',
-                      completed: true,
-                      onTap: () {
-                        // TODO: Ver detalles del resultado
-                      },
-                    ),
-
-                    ResultItem(
-                      title: 'Physics Fundamentals',
-                      subtitle: 'Completed Oct 24',
-                      score: '85/100',
-                      completed: true,
-                      onTap: () {
-                        // TODO: Ver detalles del resultado
-                      },
-                    ),
-
-                    ResultItem(
-                      title: 'Chemistry Lab Theory',
-                      subtitle: 'Completed Oct 05',
-                      score: 'Pending',
-                      completed: false,
-                      onTap: () {
-                        // TODO: Ver detalles del resultado
-                      },
-                    ),
+                    // ✅ Aquí va el widget que maneja el BLoC
+                    RecentResultsSection(userId: widget.user.id),
                   ],
                 ),
               ),

@@ -1,7 +1,7 @@
 // lib/features/home/presentation/bloc/assigned_exam_state.dart
 
 import 'package:equatable/equatable.dart';
-import '../../domain/entities/assigned_exam.dart';
+import '../../../domain/entities/assigned_exam.dart';
 
 abstract class AssignedExamState extends Equatable {
   const AssignedExamState();

@@ -72,7 +72,7 @@ class AuthRepositoryImpl implements AuthRepository {
       final userModel = await localDataSource.getCachedUser();
 
       if (userModel == null) {
-        return Left(CacheFailure(message: 'No hay usuario en cache'));
+        return const Left(CacheFailure(message: 'No hay usuario en cache'));
       }
 
       return Right(userModel.toEntity());
@@ -84,13 +84,13 @@ class AuthRepositoryImpl implements AuthRepository {
       );
     }
   }
-  
+
   @override
   Future<Either<Failure, User>> getCurrentUser() {
     // TODO: implement getCurrentUser
     throw UnimplementedError();
   }
-  
+
   @override
   Future<Either<Failure, bool>> isLoggedIn() {
     // TODO: implement isLoggedIn

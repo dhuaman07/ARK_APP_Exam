@@ -3,7 +3,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_login_app/features/auth/data/models/auth_response_model.dart';
 import '../../../../core/error/exceptions.dart';
-import '../models/user_model.dart';
 
 abstract class AuthRemoteDataSource {
   Future<AuthResponseModel> login({
@@ -40,7 +39,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
           throw ServerException(message: 'Respuesta vacía del servidor');
         }
 
-        if (response.data['data'] == null || response.data['data']['user'] == null) {
+        if (response.data['data'] == null ||
+            response.data['data']['user'] == null) {
           throw ServerException(message: 'Formato de respuesta inválido');
         }
 
@@ -64,7 +64,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
       if (e.type == DioExceptionType.connectionError) {
         // ✅ CAMBIO: Usar parámetro nombrado 'message:'
-        throw NetworkException(message: 'Error de conexión. Verifica tu internet');
+        throw NetworkException(
+            message: 'Error de conexión. Verifica tu internet');
       }
 
       if (e.response?.statusCode == 401) {
@@ -89,7 +90,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
       // ✅ CAMBIO: Error genérico con más contexto
       throw ServerException(
-        message: e.response?.data['message'] ?? 'Error del servidor: ${e.message}',
+        message:
+            e.response?.data['message'] ?? 'Error del servidor: ${e.message}',
       );
     } on FormatException catch (e) {
       // ✅ Error al parsear JSON
