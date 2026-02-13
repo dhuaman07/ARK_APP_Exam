@@ -1,7 +1,7 @@
 // lib/features/user_exams/data/models/exam_question_detail_model.dart
 
-import 'package:flutter_login_app/features/exam/data/models/user_exam_alternative_detail.dart';
-import 'package:flutter_login_app/features/exam/domain/entities/user_exam_detail.dart';
+import 'package:flutter_login_app/features/exam/data/models/user_exam_detail/user_exam_alternative_detail.dart';
+import 'package:flutter_login_app/features/exam/domain/entities/user_exam_detail/user_exam_detail.dart';
 
 class UserExamDetailModel extends UserExamDetail {
   const UserExamDetailModel({

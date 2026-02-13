@@ -2,7 +2,7 @@ import 'package:dartz/dartz.dart';
 import 'package:flutter_login_app/core/error/exceptions.dart';
 import 'package:flutter_login_app/core/error/failures.dart';
 import 'package:flutter_login_app/features/exam/data/datasource/user_exam_remote_datasource.dart';
-import 'package:flutter_login_app/features/exam/domain/entities/user_exam.dart';
+import 'package:flutter_login_app/features/exam/domain/entities/user_exam_detail/user_exam.dart';
 import 'package:flutter_login_app/features/exam/domain/repositories/user_exam_repository.dart';
 
 class UserExamRepositoryImpl implements UserExamRepository {

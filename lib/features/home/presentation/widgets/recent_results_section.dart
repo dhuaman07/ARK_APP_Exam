@@ -1,7 +1,8 @@
 // lib/features/home/presentation/widgets/recent_results_section.dart
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_login_app/features/exam/domain/entities/user_exam_detail/user_exam.dart';
+import 'package:flutter_login_app/features/exam/presentation/pages/exam_result_detail_page.dart';
 import 'package:flutter_login_app/features/home/presentation/bloc/user_exam/user-exam_event.dart';
 import '../../../../injection_container.dart' as di;
 import '../../../home/presentation/bloc/user_exam/user_exam_bloc.dart';
@@ -81,7 +82,7 @@ class RecentResultsSection extends StatelessWidget {
                   completed: isCompleted,
                   onTap: () {
                     if (isCompleted) {
-                      _navigateToExamDetail(context, exam.idUserExam!);
+                      _navigateToExamDetail(context, exam);
                     } else {
                       _navigateToStartExam(context, exam.idFacultyExam);
                     }
@@ -206,11 +207,11 @@ class RecentResultsSection extends StatelessWidget {
     return 'Asignado ${months[date.month - 1]} ${date.day}';
   }
 
-  void _navigateToExamDetail(BuildContext context, String examId) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Ver detalles del examen: $examId'),
-        duration: const Duration(seconds: 2),
+  void _navigateToExamDetail(BuildContext context, UserExam exam) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ExamResultDetailPage(exam: exam),
       ),
     );
   }

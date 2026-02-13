@@ -1,7 +1,7 @@
 // lib/features/home/presentation/bloc/user_exam/user_exam_state.dart
 
 import 'package:equatable/equatable.dart';
-import '../../../../exam/domain/entities/user_exam.dart';
+import '../../../../exam/domain/entities/user_exam_detail/user_exam.dart';
 
 abstract class UserExamState extends Equatable {
   const UserExamState();

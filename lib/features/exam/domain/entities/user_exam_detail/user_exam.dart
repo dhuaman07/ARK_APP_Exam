@@ -1,6 +1,6 @@
 // lib/features/exam/domain/entities/user_exam.dart
 
-import 'package:flutter_login_app/features/exam/domain/entities/user_exam_detail.dart';
+import 'package:flutter_login_app/features/exam/domain/entities/user_exam_detail/user_exam_detail.dart';
 
 class UserExam {
   final String idFacultyExam;

@@ -1,12 +1,15 @@
 import 'package:equatable/equatable.dart';
 
 class AssignedExam extends Equatable {
+  final String idFacultyExamAssigment;
   final String idFacultyExam;
   final String typeExam;
   final int totalQuestions;
 
   const AssignedExam(
-      {required this.idFacultyExam,
+      {
+      required this.idFacultyExamAssigment,
+      required this.idFacultyExam,
       required this.typeExam,
       required this.totalQuestions});
 
@@ -19,5 +22,5 @@ class AssignedExam extends Equatable {
   }
 
   @override
-  List<Object?> get props => [idFacultyExam, typeExam, totalQuestions];
+  List<Object?> get props => [idFacultyExamAssigment,idFacultyExam, typeExam, totalQuestions];
 }

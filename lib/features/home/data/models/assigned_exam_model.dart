@@ -2,6 +2,7 @@ import 'package:flutter_login_app/features/home/domain/entities/assigned_exam.da
 
 class AssignedExamModel extends AssignedExam {
   const AssignedExamModel({
+    required super.idFacultyExamAssigment,
     required super.idFacultyExam,
     required super.typeExam,
     required super.totalQuestions,
@@ -9,6 +10,7 @@ class AssignedExamModel extends AssignedExam {
 
   factory AssignedExamModel.fromJson(Map<String, dynamic> json) {
     return AssignedExamModel(
+      idFacultyExamAssigment: json['idFacultyExamAssigment'] ?? '',
       idFacultyExam: json['idFacultyExam'] ?? '',
       typeExam: json['typeExam'] ?? '',
       totalQuestions: _parseToInt(json['totalQuestions']) ?? 0,
@@ -27,6 +29,7 @@ class AssignedExamModel extends AssignedExam {
 
   Map<String, dynamic> toJson() {
     return {
+      'idFacultyExamAssigment': idFacultyExamAssigment,
       'idFacultyExam': idFacultyExam,
       'typeExam': typeExam,
       'totalQuestions': totalQuestions
@@ -35,6 +38,7 @@ class AssignedExamModel extends AssignedExam {
 
   AssignedExam toEntity() {
     return AssignedExam(
+        idFacultyExamAssigment: idFacultyExamAssigment,
         idFacultyExam: idFacultyExam,
         typeExam: typeExam,
         totalQuestions: totalQuestions);

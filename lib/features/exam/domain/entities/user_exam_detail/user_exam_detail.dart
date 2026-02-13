@@ -1,4 +1,4 @@
-import 'package:flutter_login_app/features/exam/domain/entities/user_exam_alternative_detail.dart';
+import 'package:flutter_login_app/features/exam/domain/entities/user_exam_detail/user_exam_alternative_detail.dart';
 
 class UserExamDetail {
   final String id;

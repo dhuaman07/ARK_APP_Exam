@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_login_app/core/error/exceptions.dart';
-import 'package:flutter_login_app/features/exam/data/models/user_exam_model.dart';
+import 'package:flutter_login_app/features/exam/data/models/user_exam_detail/user_exam_model.dart';
 
 abstract class UserExamRemoteDataSource {
   Future<List<UserExamModel>> getAllExamsByUser(String idUser);

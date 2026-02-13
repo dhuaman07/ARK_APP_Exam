@@ -109,62 +109,6 @@ class AssignedExamsSection extends StatelessWidget {
     );
   }
 
-  // ✅ Vista VACÍA (sin exámenes asignados) - MEJORADA
-  // Widget _buildEmptyView(BuildContext context) {
-  //   return Container(
-  //     padding: const EdgeInsets.all(30),
-  //     decoration: BoxDecoration(
-  //       color: Colors.blue.shade50,
-  //       borderRadius: BorderRadius.circular(12),
-  //       border: Border.all(color: Colors.blue.shade200),
-  //     ),
-  //     child: Column(
-  //       children: [
-  //         Icon(
-  //           Icons.assignment_outlined,
-  //           size: 64,
-  //           color: Colors.blue.shade300,
-  //         ),
-  //         const SizedBox(height: 16),
-  //         Text(
-  //           'No tienes exámenes asignados',
-  //           style: TextStyle(
-  //             fontSize: 18,
-  //             fontWeight: FontWeight.bold,
-  //             color: Colors.blue.shade900,
-  //           ),
-  //         ),
-  //         const SizedBox(height: 8),
-  //         Text(
-  //           'Cuando tu profesor te asigne un examen,\naparecerá aquí para que puedas realizarlo.',
-  //           textAlign: TextAlign.center,
-  //           style: TextStyle(
-  //             fontSize: 14,
-  //             color: Colors.blue.shade700,
-  //             height: 1.5,
-  //           ),
-  //         ),
-  //         const SizedBox(height: 20),
-  //         OutlinedButton.icon(
-  //           onPressed: () {
-  //             // ✅ Refrescar para verificar si hay nuevos exámenes
-  //             context.read<AssignedExamBloc>().add(
-  //                   LoadAssignedExams(userId: userId),
-  //                 );
-  //           },
-  //           icon: const Icon(Icons.refresh, size: 20),
-  //           label: const Text('Actualizar'),
-  //           style: OutlinedButton.styleFrom(
-  //             foregroundColor: Colors.blue.shade700,
-  //             side: BorderSide(color: Colors.blue.shade700),
-  //             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-  //           ),
-  //         ),
-  //       ],
-  //     ),
-  //   );
-  // }
-
   Widget _buildEmptyView(BuildContext context) {
     return Container(
       width: double.infinity,
@@ -248,7 +192,9 @@ class AssignedExamsSection extends StatelessWidget {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => ExamDetailPage(exam: exam),
+        builder: (_) => ExamDetailPage(
+          idFacultyExamAssigment: exam.idFacultyExamAssigment,
+          idUser: userId,),
       ),
     );
   }
