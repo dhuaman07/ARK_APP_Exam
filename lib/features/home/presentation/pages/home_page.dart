@@ -7,7 +7,6 @@ import '../../../auth/presentation/pages/login_page.dart';
 import '../widgets/home_header.dart';
 import '../widgets/performance_summary_card.dart';
 import '../widgets/assigned_exams_section.dart'; // ✅ Importar
-import '../widgets/result_item.dart';
 import '../widgets/custom_bottom_nav.dart';
 
 class HomePage extends StatefulWidget {
@@ -58,7 +57,10 @@ class _HomePageState extends State<HomePage> {
                     const SizedBox(height: 16),
 
                     // ✅ Aquí va el widget que maneja el BLoC
-                    AssignedExamsSection(userId: widget.user.id),
+                    AssignedExamsSection(
+                      userId: widget.user.id,
+                      user: widget.user,
+                    ),
 
                     const SizedBox(height: 24),
 

@@ -65,7 +65,7 @@ class RecentResultsSection extends StatelessWidget {
             });
 
             // ✅ Tomar los últimos 3
-            final recentExams = allExams.take(3).toList();
+            final recentExams = allExams.take(100).toList();
 
             return Column(
               children: recentExams.map((exam) {

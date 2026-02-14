@@ -12,22 +12,24 @@ class ExamResultDetailPage extends StatelessWidget {
   const ExamResultDetailPage({super.key, required this.exam});
 
   // ── Colores (tema claro) ──────────────────────────────
-  static const _bg          = Color(0xFFF5F6FA);
-  static const _surface     = Color(0xFFFFFFFF);
-  static const _surface2    = Color(0xFFF0F1F5);
-  static const _border      = Color(0xFFE4E6EF);
-  static const _correct     = Color(0xFF00B87A);
-  static const _wrong       = Color(0xFFFF3D5A);
-  static const _accent      = Color(0xFF4C7EF3);
+  static const _bg = Color(0xFFF5F6FA);
+  static const _surface = Color(0xFFFFFFFF);
+  static const _surface2 = Color(0xFFF0F1F5);
+  static const _border = Color(0xFFE4E6EF);
+  static const _correct = Color(0xFF00B87A);
+  static const _wrong = Color(0xFFFF3D5A);
+  static const _accent = Color(0xFF4C7EF3);
   static const _textPrimary = Color(0xFF1A1D2E);
-  static const _textMuted   = Color(0xFF8E92A4);
+  static const _textMuted = Color(0xFF8E92A4);
 
   // ── Helpers ───────────────────────────────────────────
   int get _correctCount => exam.details.where((d) {
-    return d.alternatives.any(
-      (a) => a.id == a.idAlternativeSelected && a.isCorrectQst,
-    );
-  }).length;
+        return d.alternatives.any(
+          (a) => a.id == a.idAlternativeSelected && a.isCorrectQst,
+        );
+      }).length;
+
+  int get _totalQuestions => exam.details.length;
 
   int get _wrongCount => exam.details.length - _correctCount;
 
@@ -47,7 +49,7 @@ class ExamResultDetailPage extends StatelessWidget {
 
   _AltState _altState(UserExamAlternativeDetail alt) {
     final isSelected = alt.id == alt.idAlternativeSelected;
-    if (isSelected && alt.isCorrectQst)  return _AltState.correctSelected;
+    if (isSelected && alt.isCorrectQst) return _AltState.correctSelected;
     if (isSelected && !alt.isCorrectQst) return _AltState.wrongSelected;
     if (!isSelected && alt.isCorrectQst) return _AltState.correctNotSelected;
     return _AltState.neutral;
@@ -98,14 +100,18 @@ class ExamResultDetailPage extends StatelessWidget {
             borderRadius: BorderRadius.circular(10),
             border: Border.all(color: _border),
           ),
-          child: const Icon(Icons.arrow_back_ios_new_rounded, size: 15, color: _textMuted),
+          child: const Icon(Icons.arrow_back_ios_new_rounded,
+              size: 15, color: _textMuted),
         ),
       ),
       title: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text('Revisión de Examen',
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: _textPrimary)),
+              style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: _textPrimary)),
           Text('Examen Tipo ${exam.typeExam} · ${_formatDate(exam.endDate)}',
               style: const TextStyle(fontSize: 11, color: _textMuted)),
         ],
@@ -119,8 +125,10 @@ class ExamResultDetailPage extends StatelessWidget {
 
   // ── SCORE CARD ────────────────────────────────────────
   Widget _buildScoreCard() {
-    final score = exam.finalGrade.toStringAsFixed(0);
-    final pct   = (exam.finalGrade / 100).clamp(0.0, 1.0);
+    // ✅ Score: correctas/total
+    // ✅ Nota: ya viene del backend en exam.finalGrade
+    final bool isApproved = exam.finalGrade >= 11;
+    final double pct = (_correctCount / _totalQuestions).clamp(0.0, 1.0);
 
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 20, 16, 12),
@@ -137,55 +145,168 @@ class ExamResultDetailPage extends StatelessWidget {
           ),
         ],
       ),
-      child: Row(
+      child: Column(
         children: [
-          SizedBox(
-            width: 86, height: 86,
-            child: Stack(
-              alignment: Alignment.center,
+          Row(
+            children: [
+              // ── Círculo score ────────────────────────────
+              SizedBox(
+                width: 86,
+                height: 86,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    SizedBox(
+                      width: 86,
+                      height: 86,
+                      child: CircularProgressIndicator(
+                        value: pct,
+                        strokeWidth: 6,
+                        backgroundColor: _surface2,
+                        valueColor: AlwaysStoppedAnimation(
+                          isApproved ? _correct : _wrong,
+                        ),
+                        strokeCap: StrokeCap.round,
+                      ),
+                    ),
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // ✅ Correctas (no finalGrade)
+                        Text(
+                          '$_correctCount',
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w700,
+                            color: isApproved ? _correct : _wrong,
+                          ),
+                        ),
+                        // ✅ Total preguntas
+                        Text(
+                          '/$_totalQuestions',
+                          style: const TextStyle(
+                            fontSize: 10,
+                            color: _textMuted,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(width: 20),
+
+              // ── Info ──────────────────────────────────────
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Examen Completado',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: _textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Duración: ${_duration()} · ${exam.details.length} preguntas',
+                      style: const TextStyle(fontSize: 11, color: _textMuted),
+                    ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: [
+                        _chip('Tipo ${exam.typeExam}', _accent,
+                            const Color(0x1A4C7EF3)),
+                        _chip('✓ $_correctCount correctas', _correct,
+                            const Color(0x1400B87A)),
+                        _chip(
+                            '✗ $_wrongCount incorrecta${_wrongCount != 1 ? "s" : ""}',
+                            _wrong,
+                            const Color(0x14FF3D5A)),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+          // ✅ NOTA FINAL (nueva sección debajo)
+          const SizedBox(height: 16),
+          _buildFinalGrade(isApproved),
+        ],
+      ),
+    );
+  }
+
+// ── Nota final ─────────────────────────────────────────────────
+  Widget _buildFinalGrade(bool isApproved) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: isApproved ? const Color(0xFFE8FAF3) : const Color(0xFFFFECEF),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isApproved ? const Color(0xFF99DFC3) : const Color(0xFFFFB3BE),
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          // ── Ícono + label ────────────────────────────────
+          Row(
+            children: [
+              Icon(
+                isApproved
+                    ? Icons.emoji_events_rounded
+                    : Icons.sentiment_dissatisfied_rounded,
+                size: 20,
+                color: isApproved ? _correct : _wrong,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                isApproved ? 'Aprobado' : 'Desaprobado',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: isApproved ? _correct : _wrong,
+                ),
+              ),
+            ],
+          ),
+
+          // ── Nota ─────────────────────────────────────────
+          RichText(
+            text: TextSpan(
               children: [
-                SizedBox(
-                  width: 86, height: 86,
-                  child: CircularProgressIndicator(
-                    value: pct,
-                    strokeWidth: 6,
-                    backgroundColor: _surface2,
-                    valueColor: const AlwaysStoppedAnimation(_correct),
-                    strokeCap: StrokeCap.round,
+                const TextSpan(
+                  text: 'Nota  ',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: _textMuted,
                   ),
                 ),
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(score,
-                        style: const TextStyle(
-                            fontSize: 22, fontWeight: FontWeight.w700, color: _correct)),
-                    const Text('/100',
-                        style: TextStyle(fontSize: 10, color: _textMuted)),
-                  ],
+                TextSpan(
+                  // ✅ Usa exam.finalGrade directamente del backend
+                  text: exam.finalGrade.toStringAsFixed(2),
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    color: isApproved ? _correct : _wrong,
+                  ),
                 ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 20),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Examen Completado',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: _textPrimary)),
-                const SizedBox(height: 4),
-                Text('Duración: ${_duration()} · ${exam.details.length} preguntas',
-                    style: const TextStyle(fontSize: 11, color: _textMuted)),
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 6, runSpacing: 6,
-                  children: [
-                    _chip('Tipo ${exam.typeExam}', _accent, const Color(0x1A4C7EF3)),
-                    _chip('✓ $_correctCount correctas', _correct, const Color(0x1400B87A)),
-                    _chip('✗ $_wrongCount incorrecta${_wrongCount != 1 ? "s" : ""}',
-                        _wrong, const Color(0x14FF3D5A)),
-                  ],
+                const TextSpan(
+                  text: ' / 20',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: _textMuted,
+                  ),
                 ),
               ],
             ),
@@ -204,7 +325,8 @@ class ExamResultDetailPage extends StatelessWidget {
         border: Border.all(color: fg.withOpacity(.3)),
       ),
       child: Text(label,
-          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: fg)),
+          style:
+              TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: fg)),
     );
   }
 
@@ -226,10 +348,11 @@ class ExamResultDetailPage extends StatelessWidget {
         ],
       ),
       child: Wrap(
-        spacing: 16, runSpacing: 8,
+        spacing: 16,
+        runSpacing: 8,
         children: [
           _legendItem(_correct, 'Respondiste correctamente'),
-          _legendItem(_wrong,   'Respondiste incorrectamente'),
+          _legendItem(_wrong, 'Respondiste incorrectamente'),
           _legendItem(const Color(0xFFCDD0E0), 'Respuesta correcta no marcada'),
         ],
       ),
@@ -241,8 +364,10 @@ class ExamResultDetailPage extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          width: 10, height: 10,
-          decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(3)),
+          width: 10,
+          height: 10,
+          decoration: BoxDecoration(
+              color: color, borderRadius: BorderRadius.circular(3)),
         ),
         const SizedBox(width: 6),
         Text(label, style: const TextStyle(fontSize: 11, color: _textMuted)),
@@ -257,8 +382,11 @@ class ExamResultDetailPage extends StatelessWidget {
       child: Row(
         children: [
           const Text('PREGUNTAS Y RESPUESTAS',
-              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600,
-                  letterSpacing: 1.4, color: _textMuted)),
+              style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 1.4,
+                  color: _textMuted)),
           const SizedBox(width: 10),
           Expanded(child: Container(height: 1, color: _border)),
         ],
@@ -294,7 +422,8 @@ class ExamResultDetailPage extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: const Color(0x1A4C7EF3),
                     borderRadius: BorderRadius.circular(8),
@@ -302,7 +431,9 @@ class ExamResultDetailPage extends StatelessWidget {
                   ),
                   child: Text('Q ${index.toString().padLeft(2, '0')}',
                       style: const TextStyle(
-                          fontSize: 11, fontWeight: FontWeight.w700, color: _accent)),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: _accent)),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -317,8 +448,8 @@ class ExamResultDetailPage extends StatelessWidget {
             padding: const EdgeInsets.all(12),
             child: Column(
               children: List.generate(detail.alternatives.length, (i) {
-                final alt    = detail.alternatives[i];
-                final state  = _altState(alt);
+                final alt = detail.alternatives[i];
+                final state = _altState(alt);
                 final letter = String.fromCharCode(65 + i);
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 8),
@@ -333,40 +464,42 @@ class ExamResultDetailPage extends StatelessWidget {
   }
 
   // ── ALTERNATIVE ROW ───────────────────────────────────
-  Widget _buildAlt(UserExamAlternativeDetail alt, String letter, _AltState state) {
+  Widget _buildAlt(
+      UserExamAlternativeDetail alt, String letter, _AltState state) {
     final Color bg, borderColor, letterBg, letterFg, textFg;
     Widget? icon;
 
     switch (state) {
       case _AltState.correctSelected:
-        bg          = const Color(0xFFE8FAF3);
+        bg = const Color(0xFFE8FAF3);
         borderColor = const Color(0xFF99DFC3);
-        letterBg    = _correct;
-        letterFg    = Colors.white;
-        textFg      = _correct;
-        icon = const Icon(Icons.check_circle_rounded, color: _correct, size: 18);
+        letterBg = _correct;
+        letterFg = Colors.white;
+        textFg = _correct;
+        icon =
+            const Icon(Icons.check_circle_rounded, color: _correct, size: 18);
       case _AltState.wrongSelected:
-        bg          = const Color(0xFFFFECEF);
+        bg = const Color(0xFFFFECEF);
         borderColor = const Color(0xFFFFB3BE);
-        letterBg    = _wrong;
-        letterFg    = Colors.white;
-        textFg      = _wrong;
+        letterBg = _wrong;
+        letterFg = Colors.white;
+        textFg = _wrong;
         icon = const Icon(Icons.cancel_rounded, color: _wrong, size: 18);
       case _AltState.correctNotSelected:
-        bg          = const Color(0xFFF2FCF7);
+        bg = const Color(0xFFF2FCF7);
         borderColor = const Color(0xFFBBEDD8);
-        letterBg    = const Color(0xFFCCF0E2);
-        letterFg    = _correct;
-        textFg      = const Color(0xFF00956A);
+        letterBg = const Color(0xFFCCF0E2);
+        letterFg = _correct;
+        textFg = const Color(0xFF00956A);
         icon = const Icon(Icons.check_circle_outline_rounded,
             color: Color(0xFF00956A), size: 18);
       case _AltState.neutral:
-        bg          = _surface2;
+        bg = _surface2;
         borderColor = _border;
-        letterBg    = _surface;
-        letterFg    = _textMuted;
-        textFg      = _textPrimary;
-        icon        = null;
+        letterBg = _surface;
+        letterFg = _textMuted;
+        textFg = _textPrimary;
+        icon = null;
     }
 
     return Container(
@@ -379,21 +512,28 @@ class ExamResultDetailPage extends StatelessWidget {
       child: Row(
         children: [
           Container(
-            width: 28, height: 28,
+            width: 28,
+            height: 28,
             alignment: Alignment.center,
             decoration: BoxDecoration(
                 color: letterBg, borderRadius: BorderRadius.circular(8)),
             child: Text(letter,
                 style: TextStyle(
-                    fontSize: 12, fontWeight: FontWeight.w700, color: letterFg)),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: letterFg)),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
               alt.alternativeRpta +
-                  (state == _AltState.correctNotSelected ? ' · respuesta correcta' : ''),
+                  (state == _AltState.correctNotSelected
+                      ? ' · respuesta correcta'
+                      : ''),
               style: TextStyle(
-                  fontSize: 13, height: 1.5, color: textFg,
+                  fontSize: 13,
+                  height: 1.5,
+                  color: textFg,
                   fontWeight: state == _AltState.neutral
                       ? FontWeight.w400
                       : FontWeight.w500),
@@ -420,7 +560,8 @@ class ExamResultDetailPage extends StatelessWidget {
           style: ElevatedButton.styleFrom(
             backgroundColor: _accent,
             foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
             elevation: 0,
           ),
         ),

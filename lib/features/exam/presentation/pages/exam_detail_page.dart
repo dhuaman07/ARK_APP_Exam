@@ -1,30 +1,44 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_login_app/features/auth/domain/entities/user.dart';
 import 'package:flutter_login_app/features/exam/data/models/user_exam_create/user_exam_create.dart';
 import 'package:flutter_login_app/features/exam/domain/entities/user_exam_assigment/user_exam_assigment.dart';
 import 'package:flutter_login_app/features/exam/presentation/bloc/user_exam_assigment/user_exam_assigment_bloc.dart';
 import 'package:flutter_login_app/features/exam/presentation/bloc/user_exam_assigment/user_exam_assigment_event.dart';
 import 'package:flutter_login_app/features/exam/presentation/bloc/user_exam_assigment/user_exam_assigment_state.dart';
+import 'package:flutter_login_app/features/exam/presentation/bloc/user_exam_submit/user_exam_submit_bloc.dart';
+import 'package:flutter_login_app/features/exam/presentation/bloc/user_exam_submit/user_exam_submit_event.dart';
+import 'package:flutter_login_app/features/exam/presentation/bloc/user_exam_submit/user_exam_submit_state.dart';
+import 'package:flutter_login_app/features/home/presentation/pages/home_page.dart';
 import 'package:flutter_login_app/injection_container.dart' as di;
 
 class ExamDetailPage extends StatelessWidget {
   final String idFacultyExamAssigment;
-  final String idUser; // ✅ necesario para el submit
+  final String idUser;
+  final User user; // ✅ AGREGADO
 
   const ExamDetailPage({
     super.key,
     required this.idFacultyExamAssigment,
     required this.idUser,
+    required this.user, // ✅ AGREGADO
   });
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => di.sl<UserExamAssigmentBloc>()
-        ..add(LoadExamAssigment(
-          idFacultyExamAssigment: idFacultyExamAssigment,
-        )),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (_) => di.sl<UserExamAssigmentBloc>()
+            ..add(LoadExamAssigment(
+              idFacultyExamAssigment: idFacultyExamAssigment,
+            )),
+        ),
+        BlocProvider(
+          create: (_) => di.sl<UserExamSubmitBloc>(),
+        ),
+      ],
       child: BlocBuilder<UserExamAssigmentBloc, UserExamAssigmentState>(
         builder: (context, state) {
           if (state is UserExamAssigmentLoading ||
@@ -37,7 +51,8 @@ class ExamDetailPage extends StatelessWidget {
           if (state is UserExamAssigmentLoaded) {
             return _ExamContent(
               exam: state.exam,
-              idUser: idUser, // ✅ pasa al contenido
+              idUser: idUser,
+              user: user, // ✅ AGREGADO
             );
           }
           return const SizedBox.shrink();
@@ -83,8 +98,8 @@ class ExamDetailPage extends StatelessWidget {
               const SizedBox(height: 8),
               Text(message,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
-                      fontSize: 14, color: Color(0xFF757575))),
+                  style:
+                      const TextStyle(fontSize: 14, color: Color(0xFF757575))),
             ],
           ),
         ),
@@ -93,14 +108,16 @@ class ExamDetailPage extends StatelessWidget {
   }
 }
 
-// ── Widget interno con toda la lógica del examen ────────────────
+// ── Widget interno ───────────────────────────────────────────────
 class _ExamContent extends StatefulWidget {
   final AssigmentExam exam;
-  final String idUser; // ✅
+  final String idUser;
+  final User user; // ✅ AGREGADO
 
   const _ExamContent({
     required this.exam,
     required this.idUser,
+    required this.user, // ✅ AGREGADO
   });
 
   @override
@@ -109,26 +126,21 @@ class _ExamContent extends StatefulWidget {
 
 class _ExamContentState extends State<_ExamContent> {
   int _currentQuestionIndex = 0;
-
-  // Key: índice de pregunta, Value: id de la alternativa seleccionada
   final Map<int, String> _selectedAnswers = {};
-
   late int _timeRemainingSeconds;
-  late DateTime _startDate; // ✅ guarda cuándo inició el examen
+  late DateTime _startDate;
   Timer? _timer;
 
   List<AssigmentExamQuestion> get _questions => widget.exam.questions;
   AssigmentExamQuestion get _currentQuestion =>
       _questions[_currentQuestionIndex];
-  bool get _isLastQuestion =>
-      _currentQuestionIndex == _questions.length - 1;
-  bool get _hasAnswer =>
-      _selectedAnswers.containsKey(_currentQuestionIndex);
+  bool get _isLastQuestion => _currentQuestionIndex == _questions.length - 1;
+  bool get _hasAnswer => _selectedAnswers.containsKey(_currentQuestionIndex);
 
   @override
   void initState() {
     super.initState();
-    _startDate = DateTime.now(); // ✅ registra inicio
+    _startDate = DateTime.now();
     _timeRemainingSeconds = _questions.length * 2 * 60;
     _startTimer();
   }
@@ -150,36 +162,106 @@ class _ExamContentState extends State<_ExamContent> {
     });
   }
 
-  // ── BUILD ──────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildHeader(),
-            _buildProgress(),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildQuestionBadge(),
-                    const SizedBox(height: 16),
-                    _buildQuestion(_currentQuestion.questionName),
-                    const SizedBox(height: 24),
-                    ..._buildAlternatives(_currentQuestion.alternatives),
-                  ],
-                ),
+    return BlocListener<UserExamSubmitBloc, UserExamSubmitState>(
+      listener: (context, state) {
+        // ── Loading ──────────────────────────────────────
+        if (state is UserExamSubmitLoading) {
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (_) => const Center(
+              child: CircularProgressIndicator(
+                color: Color(0xFF2196F3),
               ),
             ),
-            _buildNavigationButtons(),
-          ],
+          );
+        }
+
+        // ── Success → Home ───────────────────────────────
+        if (state is UserExamSubmitSuccess) {
+          if (Navigator.canPop(context)) Navigator.pop(context);
+
+          // ✅ Navega al Home con el user
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(
+              builder: (_) => HomePage(user: widget.user), // ✅ CORREGIDO
+            ),
+            (route) => false,
+          );
+        }
+
+        // ── Error ────────────────────────────────────────
+        if (state is UserExamSubmitError) {
+          if (Navigator.canPop(context)) Navigator.pop(context);
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('❌ ${state.message}'),
+              backgroundColor: const Color(0xFFFF5252),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      },
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        body: SafeArea(
+          child: Column(
+            children: [
+              _buildHeader(),
+              _buildProgress(),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildQuestionBadge(),
+                      const SizedBox(height: 16),
+                      _buildQuestion(_currentQuestion.questionName),
+                      const SizedBox(height: 24),
+                      ..._buildAlternatives(_currentQuestion.alternatives),
+                    ],
+                  ),
+                ),
+              ),
+              _buildNavigationButtons(),
+            ],
+          ),
         ),
       ),
     );
+  }
+
+  void _submitExam() {
+    _timer?.cancel();
+
+    final endDate = DateTime.now();
+
+    final details = _selectedAnswers.entries.map((entry) {
+      final question = _questions[entry.key];
+      return UserExamDetailRequest(
+        idQuestion: question.id,
+        idAlternative: entry.value,
+      );
+    }).toList();
+
+    final request = UserExamRequest(
+      idUser: widget.idUser,
+      idFacultyExam: widget.exam.idFacultyExam,
+      startDate: _startDate,
+      endDate: endDate,
+      userExamDetail: details,
+    );
+
+    print('📤 Payload: ${request.toJson()}');
+
+    context.read<UserExamSubmitBloc>().add(
+          SubmitExamEvent(request: request),
+        );
   }
 
   Widget _buildHeader() {
@@ -204,8 +286,7 @@ class _ExamContentState extends State<_ExamContent> {
               color: const Color(0xFF2196F3).withOpacity(0.1),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(Icons.school,
-                color: Color(0xFF2196F3), size: 24),
+            child: const Icon(Icons.school, color: Color(0xFF2196F3), size: 24),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -221,15 +302,14 @@ class _ExamContentState extends State<_ExamContent> {
                 ),
                 Text(
                   '${_questions.length} preguntas',
-                  style: const TextStyle(
-                      fontSize: 12, color: Color(0xFF757575)),
+                  style:
+                      const TextStyle(fontSize: 12, color: Color(0xFF757575)),
                 ),
               ],
             ),
           ),
           Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
               color: const Color(0xFFFF5252).withOpacity(0.1),
               borderRadius: BorderRadius.circular(20),
@@ -264,8 +344,7 @@ class _ExamContentState extends State<_ExamContent> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text('Progreso',
-                  style: TextStyle(
-                      fontSize: 14, color: Color(0xFF757575))),
+                  style: TextStyle(fontSize: 14, color: Color(0xFF757575))),
               Text(
                 'Pregunta ${(_currentQuestionIndex + 1).toString().padLeft(2, '0')} / ${_questions.length}',
                 style: const TextStyle(
@@ -281,8 +360,8 @@ class _ExamContentState extends State<_ExamContent> {
             child: LinearProgressIndicator(
               value: (_currentQuestionIndex + 1) / _questions.length,
               backgroundColor: const Color(0xFFE0E0E0),
-              valueColor: const AlwaysStoppedAnimation<Color>(
-                  Color(0xFF2196F3)),
+              valueColor:
+                  const AlwaysStoppedAnimation<Color>(Color(0xFF2196F3)),
               minHeight: 8,
             ),
           ),
@@ -320,13 +399,11 @@ class _ExamContentState extends State<_ExamContent> {
     );
   }
 
-  List<Widget> _buildAlternatives(
-      List<AssigmentExamAlternative> alternatives) {
+  List<Widget> _buildAlternatives(List<AssigmentExamAlternative> alternatives) {
     return List.generate(alternatives.length, (i) {
       final alt = alternatives[i];
       final letter = String.fromCharCode(65 + i);
-      final isSelected =
-          _selectedAnswers[_currentQuestionIndex] == alt.id;
+      final isSelected = _selectedAnswers[_currentQuestionIndex] == alt.id;
 
       return _buildAlternativeOption(
         letter: letter,
@@ -344,8 +421,8 @@ class _ExamContentState extends State<_ExamContent> {
     bool isSelected = false,
   }) {
     return GestureDetector(
-      onTap: () => setState(
-          () => _selectedAnswers[_currentQuestionIndex] = altId),
+      onTap: () =>
+          setState(() => _selectedAnswers[_currentQuestionIndex] = altId),
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(16),
@@ -354,9 +431,8 @@ class _ExamContentState extends State<_ExamContent> {
               ? const Color(0xFF2196F3).withOpacity(0.1)
               : Colors.white,
           border: Border.all(
-            color: isSelected
-                ? const Color(0xFF2196F3)
-                : const Color(0xFFE0E0E0),
+            color:
+                isSelected ? const Color(0xFF2196F3) : const Color(0xFFE0E0E0),
             width: isSelected ? 2 : 1,
           ),
           borderRadius: BorderRadius.circular(12),
@@ -378,9 +454,8 @@ class _ExamContentState extends State<_ExamContent> {
                   style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: isSelected
-                          ? Colors.white
-                          : const Color(0xFF757575)),
+                      color:
+                          isSelected ? Colors.white : const Color(0xFF757575)),
                 ),
               ),
             ),
@@ -422,17 +497,15 @@ class _ExamContentState extends State<_ExamContent> {
         children: [
           if (_currentQuestionIndex > 0) ...[
             OutlinedButton(
-              onPressed: () =>
-                  setState(() => _currentQuestionIndex--),
+              onPressed: () => setState(() => _currentQuestionIndex--),
               style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 24, vertical: 16),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                 side: const BorderSide(color: Color(0xFFE0E0E0)),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12)),
               ),
-              child: const Icon(Icons.arrow_back,
-                  color: Color(0xFF757575)),
+              child: const Icon(Icons.arrow_back, color: Color(0xFF757575)),
             ),
             const SizedBox(width: 12),
           ],
@@ -480,21 +553,18 @@ class _ExamContentState extends State<_ExamContent> {
       context: context,
       barrierDismissible: false,
       builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('Finalizar Examen'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-                '¿Estás seguro de que deseas finalizar el examen?'),
+            const Text('¿Estás seguro de que deseas finalizar el examen?'),
             const SizedBox(height: 16),
             Text(
               'Preguntas respondidas: ${_selectedAnswers.length}/${_questions.length}',
               style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF2196F3)),
+                  fontWeight: FontWeight.bold, color: Color(0xFF2196F3)),
             ),
           ],
         ),
@@ -510,8 +580,8 @@ class _ExamContentState extends State<_ExamContent> {
             },
             style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF2196F3)),
-            child: const Text('Finalizar',
-                style: TextStyle(color: Colors.white)),
+            child:
+                const Text('Finalizar', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -523,8 +593,7 @@ class _ExamContentState extends State<_ExamContent> {
       context: context,
       barrierDismissible: false,
       builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Row(
           children: [
             Icon(Icons.access_time, color: Color(0xFFFF5252)),
@@ -542,47 +611,12 @@ class _ExamContentState extends State<_ExamContent> {
             },
             style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF2196F3)),
-            child: const Text('Aceptar',
-                style: TextStyle(color: Colors.white)),
+            child: const Text('Aceptar', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
     );
   }
-
-  // ── SUBMIT ✅ ──────────────────────────────────────────────────
- void _submitExam() {
-  final endDate = DateTime.now();
-
-  // ✅ UserExamDetailRequest → correcto para cada respuesta
-  final details = _selectedAnswers.entries.map((entry) {
-    final question = _questions[entry.key];
-    return UserExamDetailRequest(   // ✅ no UserExamRequest
-      idQuestion:   question.id,
-      idAlternative: entry.value,
-    );
-  }).toList();
-
-  // ✅ SubmitExamRequest → correcto para el payload completo
-  final request = UserExamRequest(  // ✅ no UserExamDetailRequest
-    idUser:        widget.idUser,
-    idFacultyExam: widget.exam.idFacultyExam,
-    startDate:     _startDate,
-    endDate:       endDate,
-    userExamDetail: details,
-  );
-
-  print('📤 Payload: ${request.toJson()}');
-  // TODO: BLoC → enviar al backend
-
-  Navigator.pop(context);
-  ScaffoldMessenger.of(context).showSnackBar(
-    const SnackBar(
-      content: Text('Examen enviado exitosamente'),
-      backgroundColor: Color(0xFF4CAF50),
-    ),
-  );
-}
 
   String _formatTime(int seconds) {
     final m = seconds ~/ 60;

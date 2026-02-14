@@ -3,6 +3,7 @@
 import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_login_app/features/auth/domain/entities/user.dart'; // ✅ NUEVO
 import 'package:flutter_login_app/features/home/presentation/bloc/assigned_exam/asigned_exam_event.dart';
 import '../../domain/entities/assigned_exam.dart';
 import '../bloc/assigned_exam/assigned_exam_bloc.dart';
@@ -13,10 +14,12 @@ import '../../../../injection_container.dart' as di;
 
 class AssignedExamsSection extends StatelessWidget {
   final String userId;
+  final User user; // ✅ NUEVO
 
   const AssignedExamsSection({
     super.key,
     required this.userId,
+    required this.user, // ✅ NUEVO
   });
 
   @override
@@ -36,7 +39,7 @@ class AssignedExamsSection extends StatelessWidget {
 
           if (state is AssignedExamLoaded) {
             if (state.exams.isEmpty) {
-              return _buildEmptyView(context); // ✅ MEJORADO
+              return _buildEmptyView(context);
             }
 
             log('=================================================');
@@ -59,7 +62,6 @@ class AssignedExamsSection extends StatelessWidget {
     );
   }
 
-  // ✅ Vista de ERROR (problemas de conexión)
   Widget _buildErrorView(BuildContext context, String message) {
     return Container(
       padding: const EdgeInsets.all(20),
@@ -84,18 +86,13 @@ class AssignedExamsSection extends StatelessWidget {
           Text(
             message,
             textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.red.shade600,
-            ),
+            style: TextStyle(fontSize: 14, color: Colors.red.shade600),
           ),
           const SizedBox(height: 16),
           ElevatedButton.icon(
-            onPressed: () {
-              context.read<AssignedExamBloc>().add(
-                    LoadAssignedExams(userId: userId),
-                  );
-            },
+            onPressed: () => context
+                .read<AssignedExamBloc>()
+                .add(LoadAssignedExams(userId: userId)),
             icon: const Icon(Icons.refresh, size: 18),
             label: const Text('Reintentar'),
             style: ElevatedButton.styleFrom(
@@ -120,7 +117,7 @@ class AssignedExamsSection extends StatelessWidget {
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.center, // ✅ Centrar
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           const SizedBox(height: 10),
           Text(
@@ -134,11 +131,9 @@ class AssignedExamsSection extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           OutlinedButton.icon(
-            onPressed: () {
-              context.read<AssignedExamBloc>().add(
-                    LoadAssignedExams(userId: userId),
-                  );
-            },
+            onPressed: () => context
+                .read<AssignedExamBloc>()
+                .add(LoadAssignedExams(userId: userId)),
             icon: const Icon(Icons.refresh, size: 18),
             label: const Text('Actualizar'),
             style: OutlinedButton.styleFrom(
@@ -176,9 +171,7 @@ class AssignedExamsSection extends StatelessWidget {
             duration: exam.durationFormatted,
             questions: exam.questionsLabel,
             color: color,
-            onStartPressed: () {
-              _onStartExam(context, exam);
-            },
+            onStartPressed: () => _onStartExam(context, exam),
           ),
         );
       },
@@ -194,7 +187,9 @@ class AssignedExamsSection extends StatelessWidget {
       MaterialPageRoute(
         builder: (_) => ExamDetailPage(
           idFacultyExamAssigment: exam.idFacultyExamAssigment,
-          idUser: userId,),
+          idUser: userId,
+          user: user, // ✅ CORREGIDO
+        ),
       ),
     );
   }

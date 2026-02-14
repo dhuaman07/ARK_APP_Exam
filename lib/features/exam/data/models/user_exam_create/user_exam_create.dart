@@ -1,5 +1,22 @@
-// lib/features/exam/data/models/submit_exam_request.dart
+// ─── Request Detail ───────────────────────────────────────────
+import 'package:flutter_login_app/features/exam/domain/entities/user_exam_create/user_exam_create_result.dart';
 
+class UserExamDetailRequest {
+  final String idQuestion;
+  final String idAlternative;
+
+  const UserExamDetailRequest({
+    required this.idQuestion,
+    required this.idAlternative,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'idQuestion': idQuestion,
+        'idAlternative': idAlternative,
+      };
+}
+
+// ─── Request Principal ────────────────────────────────────────
 class UserExamRequest {
   final String idUser;
   final String idFacultyExam;
@@ -7,7 +24,7 @@ class UserExamRequest {
   final DateTime endDate;
   final List<UserExamDetailRequest> userExamDetail;
 
-  UserExamRequest({
+  const UserExamRequest({
     required this.idUser,
     required this.idFacultyExam,
     required this.startDate,
@@ -20,21 +37,40 @@ class UserExamRequest {
         'idFacultyExam': idFacultyExam,
         'startDate': startDate.toUtc().toIso8601String(),
         'endDate': endDate.toUtc().toIso8601String(),
-        'userExamDetail': userExamDetail.map((e) => e.toJson()).toList(),
+        'userExamDetail': userExamDetail.map((d) => d.toJson()).toList(),
       };
 }
 
-class UserExamDetailRequest {
-  final String idQuestion;
-  final String idAlternative;
+// ─── Response / Model ─────────────────────────────────────────
+class UserExamCreateModel {
+  final String? idUserExam;
+  final bool success;
+  final String? message;
+  final double? score;
 
-  UserExamDetailRequest({
-    required this.idQuestion,
-    required this.idAlternative,
+  const UserExamCreateModel({
+    this.idUserExam,
+    required this.success,
+    this.message,
+    this.score,
   });
 
-  Map<String, dynamic> toJson() => {
-        'idQuestion': idQuestion,
-        'idAlternative': idAlternative,
-      };
+  factory UserExamCreateModel.fromJson(Map<String, dynamic> json) {
+    return UserExamCreateModel(
+      idUserExam: json['idUserExam'] as String?,
+      success: json['success'] as bool? ?? false,
+      message: json['message'] as String?,
+      score: (json['score'] as num?)?.toDouble(),
+    );
+  }
+
+  // ✅ Model → Entity
+  UserExamCreateResult toEntity() {
+    return UserExamCreateResult(
+      idUserExam: idUserExam ?? '',
+      success: success,
+      message: message ?? '',
+      score: score ?? 0,
+    );
+  }
 }

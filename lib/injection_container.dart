@@ -7,6 +7,8 @@ import 'package:flutter_login_app/features/exam/data/datasource/user_exam_remote
 import 'package:flutter_login_app/features/exam/data/repositories/user_exam_repository_impl.dart';
 import 'package:flutter_login_app/features/exam/domain/repositories/user_exam_repository.dart';
 import 'package:flutter_login_app/features/exam/domain/usecases/get_all_user_exams.dart';
+import 'package:flutter_login_app/features/exam/domain/usecases/send_user_exam.dart'; // ✅ NUEVO
+import 'package:flutter_login_app/features/exam/presentation/bloc/user_exam_submit/user_exam_submit_bloc.dart'; // ✅ NUEVO
 import 'package:flutter_login_app/features/home/data/datasource/assigned_exam_remote_datasource.dart';
 import 'package:flutter_login_app/features/home/presentation/bloc/user_exam/user_exam_bloc.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -29,7 +31,7 @@ import 'features/home/domain/repositories/assigned_exam_repository.dart';
 import 'features/home/domain/usecases/get_all_assigned_exams.dart';
 import 'features/home/presentation/bloc/assigned_exam/assigned_exam_bloc.dart';
 
-// ✅ UserExamAssigment imports (NUEVO)
+// UserExamAssigment imports
 import 'features/exam/data/datasource/user_exam_assigment_remote_datasource.dart';
 import 'features/exam/data/repositories/user_exam_assigment_repository_impl.dart';
 import 'features/exam/domain/repositories/user_exam_assigment_repository.dart';
@@ -37,12 +39,7 @@ import 'features/exam/presentation/bloc/user_exam_assigment/user_exam_assigment_
 
 final sl = GetIt.instance;
 
-// ─────────────────────────────────────────────
-// 💡 Cambia esta constante según donde corras la app:
-//    Emulador Android  → 'https://10.0.2.2:7066/api'
-//    Dispositivo físico → 'https://192.168.4.110:7066/api'
-// ─────────────────────────────────────────────
-const String _baseUrl = 'https://192.168.4.110:7066/api';
+const String _baseUrl = 'https://10.0.2.2:7066/api';
 
 Future<void> init() async {
   // ============ Features - Auth ============
@@ -86,6 +83,10 @@ Future<void> init() async {
     () => UserExamBloc(getAllUserExams: sl()),
   );
   sl.registerLazySingleton(() => GetAllUserExams(sl()));
+
+  // ✅ NUEVO: UseCase de submit
+  sl.registerLazySingleton(() => SendUserExam(repository: sl()));
+
   sl.registerLazySingleton<UserExamRepository>(
     () => UserExamRepositoryImpl(remoteDataSource: sl()),
   );
@@ -93,21 +94,23 @@ Future<void> init() async {
     () => UserExamRemoteDataSourceImpl(dio: sl()),
   );
 
-  // ============ Features - Exam (UserExamAssigment) ✅ NUEVO ============
+  // ============ Features - Exam (UserExamAssigment) ============
 
-  // BLoC — registerFactory porque cada ExamDetailPage crea su propia instancia
   sl.registerFactory(
     () => UserExamAssigmentBloc(repository: sl()),
   );
-
-  // Repository
   sl.registerLazySingleton<UserExamAssigmentRepository>(
     () => UserExamAssigmentRepositoryImpl(remoteDataSource: sl()),
   );
-
-  // Data source
   sl.registerLazySingleton<UserExamAssigmentRemoteDataSource>(
     () => UserExamAssigmentRemoteDataSourceImpl(dio: sl()),
+  );
+
+  // ============ Features - Exam (UserExamSubmit) ✅ NUEVO ============
+
+  // registerFactory → cada página crea su propia instancia del BLoC
+  sl.registerFactory(
+    () => UserExamSubmitBloc(sendUserExam: sl()),
   );
 
   // ============ External ============
